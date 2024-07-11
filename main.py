@@ -40,12 +40,6 @@ def readInputDir(inputDir):
 
     return data
 
-# Set the path to the directory containing the .dcm files
-inputPath = "/app/store/input" # Keep this if you 
-
-# Read input directory
-data = readInputDir(inputPath)
-
 # Function to print the structure
 def print_structure(data):
     for patient_id, studies in data.items():
@@ -57,5 +51,32 @@ def print_structure(data):
                 for image in images:
                     print(f"      Image: {image}")
 
-# Print the structure
-print_structure(data)
+def AiPredict(data):
+
+    return 1
+
+def writeDicomFile(out):
+
+    return 1
+
+# Set the path to the directory containing the .dcm files
+inputPath = "/app/store/input" # Keep this path if you use docker
+outputPath = "/app/store/output" # Keep this path if you use docker
+
+ 
+while(True): # Create a loop to always check new .dcm files for AiPrediction
+
+    # Read input directory
+    data = readInputDir(inputPath)
+
+    # Print the structure
+    print_structure(data)
+
+    # Predict using AI
+    out = AiPredict(data)
+
+    # Write output files to outputPath
+    writeDicomFile(out)
+
+
+
