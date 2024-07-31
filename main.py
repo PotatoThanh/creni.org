@@ -23,7 +23,7 @@ from watchdog.events import FileSystemEventHandler
 
 
 MY_INPUT_PATH = os.path.join(os.getcwd(), "INPUT")  # Your INPUT folder path
-MY_OUTPUT_PATH = os.path.join(os.getcwd(), "INPUT") # Your OUTPUT folder path
+MY_OUTPUT_PATH = os.path.join(os.getcwd(), "OUTPUT") # Your OUTPUT folder path
 
 def check_dicom(file_path):
     """Check if the file is a valid DICOM file."""
