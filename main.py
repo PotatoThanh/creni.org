@@ -1,82 +1,168 @@
-import os
+"""
+Watchdog Script for Monitoring Directory Changes
+
+This script uses the watchdog library to monitor a specified directory for file creation events.
+When a file is created in the monitored directory, it logs the event to the console.
+
+Classes:
+    MyFileHandler -- Handles file system events.
+    
+Functions:
+    main -- Sets up the observer and starts monitoring the directory.
+"""
+
+import time
 import pydicom
+import numpy as np
+import cv2  # OpenCV library for image processing
+import os
 
-def readInputDir(inputDir):
-    """This function scans all files in 
+from pydicom.uid import generate_uid
+from watchdog.observers.polling import PollingObserver
+from watchdog.events import FileSystemEventHandler
 
-    Args:
-        inputDir (string): path to input folder, where storing new .dcm files
 
-    Returns:
-        structure: data[patient_id][study_id][series_number].append(dcm_file_path)
+MY_INPUT_PATH = os.path.join(os.getcwd(), "INPUT")  # Your INPUT folder path
+MY_OUTPUT_PATH = os.path.join(os.getcwd(), "INPUT") # Your OUTPUT folder path
+
+def check_dicom(file_path):
+    """Check if the file is a valid DICOM file."""
+    try:
+        ds = pydicom.dcmread(file_path)
+        return True, ds
+    except:
+        return False, None
+
+
+def modify_descriptions(ds):
+    """Append 'AI' to study description and series description."""
+    if 'StudyDescription' in ds:
+        ds.StudyDescription += " SeenByAI"
+    else:
+         ds.StudyDescription = "StudySeenByAI"
+
+    if 'SeriesDescription' in ds:
+        ds.SeriesDescription += "SeenByAI"
+    else:
+        ds.StudyDescription = "SeriesSeenByAI"
+
+    if 'StudyInstanceUID' in ds:
+        ds.StudyInstanceUID += ".1"
+    if 'SeriesInstanceUID' in ds:
+        ds.SeriesInstanceUID += ".1"
+    return ds
+
+def add_text_to_image(ds, text="seen by AI"):
+    """Add text to the DICOM image."""
+    # Extract pixel data
+    pixel_array = ds.pixel_array
+    # Convert to an OpenCV image
+    image = np.copy(pixel_array)
+    
+    if len(image.shape) == 3 and image.shape[0] == 1:  # For grayscale images with shape (1, H, W)
+        image = image[0]
+
+    # Define the position and font for the text
+    MAX_LENGTH = np.max(image.shape)
+    position = (MAX_LENGTH//2-40, MAX_LENGTH//2)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1
+    color = (255, 255, 255)  # White color
+    thickness = 2
+
+    # Add text to the image
+    image_with_text = cv2.putText(image, text, position, font, font_scale, color, thickness, cv2.LINE_AA)
+
+    # Update the pixel data in the DICOM dataset
+    ds.PixelData = image_with_text.tobytes()
+    return ds
+
+def process_dicom(input_file, output_file):
+    check, ds = check_dicom(input_file)
+
+    if check:
+        try:
+            ds = modify_descriptions(ds)
+            ds = add_text_to_image(ds)
+
+            basename = os.path.basename(output_file)
+            os.makedirs(output_file.replace(basename,""), exist_ok=True)
+
+            ds.save_as(output_file)
+            print(f"File saved to {output_file}")
+        except:
+             print("The provided file is not a valid DICOM file to modify.")
+
+    else:
+        print("The provided file is not a valid DICOM file.")
+
+class MyFileHandler(FileSystemEventHandler):
     """
+    Custom event handler for handling file system events.
+    
+    Methods:
+        on_created(event) -- Logs file creation events.
+    """
+    
+    # Comment the following method to log modified file events.
+    def on_modified(self, event):
+        """
+        Called when a file or directory is modified.
+        Logs the modified file path to the console.
+        
+        Parameters:
+            event (FileSystemEvent) -- The event object containing event information.
+        """
+        if not event.is_directory:
+            print(f'Modified file: {event.src_path}')
+            process_dicom(event.src_path, event.src_path.replace("INPUT", "OUTPUT"))
+    
+    def on_created(self, event):
+        """
+        Called when a file or directory is created.
+        Logs the created file path to the console.
+        
+        Parameters:
+            event (FileSystemEvent) -- The event object containing event information.
+        """
+        if not event.is_directory:
+            print(f'Created file: {event.src_path}')
+            process_dicom(event.src_path, event.src_path.replace("INPUT", "OUTPUT"))
 
-    # Dictionary to hold the structure
-    data = {}
-
-    # Traverse the directory
-    for root, dirs, files in os.walk(inputDir):
-        for file in files:
-            if file.endswith(".dcm"):
-                file_path = os.path.join(root, file)
-                
-                # Read the DICOM file
-                dicom = pydicom.dcmread(file_path)
-                
-                # Extract Patient, Study, and Series information
-                patient_id = dicom.PatientID
-                study_id = dicom.StudyID
-                series_number = dicom.SeriesNumber
-                
-                # Update the structure dictionary
-                if patient_id not in data:
-                    data[patient_id] = {}
-                if study_id not in data[patient_id]:
-                    data[patient_id][study_id] = {}
-                if series_number not in data[patient_id][study_id]:
-                    data[patient_id][study_id][series_number] = []
-                    
-                data[patient_id][study_id][series_number].append(file_path)
-
-    return data
-
-# Function to print the structure
-def print_structure(data):
-    for patient_id, studies in data.items():
-        print(f"Patient: {patient_id}")
-        for study_id, series in studies.items():
-            print(f"  Study: {study_id}")
-            for series_number, images in series.items():
-                print(f"    Series: {series_number}")
-                for image in images:
-                    print(f"      Image: {image}")
-
-def AiPredict(data):
-
-    return 1
-
-def writeDicomFile(out):
-
-    return 1
-
-# Set the path to the directory containing the .dcm files
-inputPath = "/app/store/input" # Keep this path if you use docker
-outputPath = "/app/store/output" # Keep this path if you use docker
-
- 
-while(True): # Create a loop to always check new .dcm files for AiPrediction
-
-    # Read input directory
-    data = readInputDir(inputPath)
-
-    # Print the structure
-    print_structure(data)
-
-    # Predict using AI
-    out = AiPredict(data)
-
-    # Write output files to outputPath
-    writeDicomFile(out)
+    
+    # Uncomment the following method to log deleted file events.
+    # def on_deleted(self, event):
+    #     """
+    #     Called when a file or directory is deleted.
+    #     Logs the deleted file path to the console.
+    #     
+    #     Parameters:
+    #         event (FileSystemEvent) -- The event object containing event information.
+    #     """
+    #     if not event.is_directory:
+    #         print(f'Deleted file: {event.src_path}')
 
 
 
+def main():
+    """
+    Main function to set up the observer and start monitoring the directory.
+    
+    This function sets up the event handler, observer, and starts the observer to monitor the specified directory
+    for file creation events. It keeps the observer running until interrupted.
+    """
+    event_handler = MyFileHandler()
+    observer = PollingObserver(timeout=1)
+    observer.schedule(event_handler, MY_INPUT_PATH, recursive=True)
+    observer.start()
+    
+    print("SERVICE IS RUNNING ...")
+    try:
+        while True:
+            time.sleep(1)
+    finally:
+        observer.stop()
+        observer.join()
+
+if __name__ == "__main__":
+    main()
