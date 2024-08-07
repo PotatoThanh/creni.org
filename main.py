@@ -37,14 +37,14 @@ def check_dicom(file_path):
 def modify_descriptions(ds):
     """Append 'AI' to study description and series description."""
     if 'StudyDescription' in ds:
-        ds.StudyDescription += " SeenByAI"
+        ds.StudyDescription += " ScreenedByAI"
     else:
-         ds.StudyDescription = "StudySeenByAI"
+         ds.StudyDescription = "StudyScreenedByAI"
 
     if 'SeriesDescription' in ds:
-        ds.SeriesDescription += "SeenByAI"
+        ds.SeriesDescription += " ScreenedByAI"
     else:
-        ds.StudyDescription = "SeriesSeenByAI"
+        ds.StudyDescription = "SeriesScreenedByAI"
 
     if 'StudyInstanceUID' in ds:
         ds.StudyInstanceUID += ".1"
@@ -52,7 +52,7 @@ def modify_descriptions(ds):
         ds.SeriesInstanceUID += ".1"
     return ds
 
-def add_text_to_image(ds, text="seen by AI"):
+def add_text_to_image(ds, text="ScreenedByAI"):
     """Add text to the DICOM image."""
     # Extract pixel data
     pixel_array = ds.pixel_array
