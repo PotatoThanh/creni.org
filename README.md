@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains a DICOM AI Service on `creni.org` designed to monitor a specified directory for DICOM files. When a new DICOM file is added to the `INPUT` directory via your gateway(s), the service automatically processes the file, modifying descriptions and adding custom text to the image before saving it to the `OUTPUT` directory. In production deployment, the all DICOM files in `OUTPUT` will `only try one time` to send to your desired PACS destinations in creni.org website.
+This repository contains a DICOM AI Service on `creni.org` designed to monitor a specified directory for DICOM files. When a new DICOM file is added to the `INPUT` directory via your gateway(s), the service automatically processes the file, modifying descriptions and adding custom text to the image before saving it to the `OUTPUT` directory. In production deployment, the all DICOM files in `OUTPUT` will `only try one time` to send to your desired PACS destinations configured in creni.org website.
 
 <p align="center">
 <img src="assets/overview.png" height="300" >
@@ -89,7 +89,7 @@ This script will:
 
 ### 4. Monitor DICOM Files
 
-Your gateway desktop application will be assigned `gateway_{id}` (e.g., gateway_1). `{id}` is unique for each gateway.
+Each gateway desktop application will be assigned `gateway_{id}` (e.g., gateway_1). `{id}` is unique for each gateway. You can only see your gateways.
 Once the environment is up and running:
 
 - In development, place your DICOM files into the `INPUT/gateway_{id}` directory. In production, all DICOM files sent via your gateway(s) will appear in the `INPUT/gateway_{id}` folder.
